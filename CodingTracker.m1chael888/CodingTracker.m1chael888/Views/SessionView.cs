@@ -1,6 +1,7 @@
 ﻿using CodingTracker.m1chael888.Models;
 using Spectre.Console;
 using static CodingTracker.m1chael888.Enums.SessionViewEnums;
+using static CodingTracker.m1chael888.Enums.EnumExtension;
 
 namespace CodingTracker.m1chael888.Views
 {
@@ -23,6 +24,7 @@ namespace CodingTracker.m1chael888.Views
                 new SelectionPrompt<SessionType>()
                 .Title("[green]Would you like to time a new session via stopwatch or manually log a past session??[/]")
                 .AddChoices(Enum.GetValues<SessionType>())
+                .UseConverter(x => GetDescription(x))
                 .HighlightStyle("green")
                 .WrapAround()
                 );
@@ -43,7 +45,7 @@ namespace CodingTracker.m1chael888.Views
             }
 
             if (error) AnsiConsole.MarkupLine($"[red]{errorMsg}[/]");
-            return AnsiConsole.Ask<string>($"[green]What date and time did the session {beginOrEnd} (mm/dd/yyyy hh:mm:ss)??[/]");
+            return AnsiConsole.Ask<string>($"[green]What date and time did the session {beginOrEnd} (yyyy/MM/dd hh:mm:ss)??[/]");
         }
 
         public void ShowSessions(List<SessionDto> sessions)

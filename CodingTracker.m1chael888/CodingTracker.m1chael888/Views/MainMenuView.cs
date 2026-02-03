@@ -1,5 +1,6 @@
 ﻿using Spectre.Console;
 using static CodingTracker.m1chael888.Enums.MainMenuEnums;
+using static CodingTracker.m1chael888.Enums.EnumExtension;
 
 namespace CodingTracker.m1chael888.Views
 {
@@ -19,6 +20,7 @@ namespace CodingTracker.m1chael888.Views
                 new SelectionPrompt<MenuOption>()
                 .Title("[green]Choose an option::[/]")
                 .AddChoices(Enum.GetValues<MenuOption>())
+                .UseConverter(x => GetDescription(x))
                 .HighlightStyle("green")
                 .WrapAround());
 

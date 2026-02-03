@@ -69,26 +69,47 @@ namespace CodingTracker.m1chael888.Controllers
         private void DisplaySessions()
         {
             var sessions = _sessionService.CallRead();
-            _sessionView.ShowSessions(sessions);
-            ReturnToMenu();
+            
+            if (sessions.Count > 0)
+            {
+                _sessionView.ShowSessions(sessions);
+                ReturnToMenu();
+            }
+            else
+            {
+                ReturnToMenu("No sessions found, add some first!!");
+            }
         }
 
         private void GetSessionToEdit()
         {
             var sessions = _sessionService.CallRead();
 
-            var id = _sessionView.GetEditId(sessions);
-            GetSessionDetails("update", editId: id);
+            if (sessions.Count > 0)
+            {
+                var id = _sessionView.GetEditId(sessions);
+                GetSessionDetails("update", editId: id);
+            }
+            else
+            {
+                ReturnToMenu("No sessions found, add some first!!");
+            }
         }
 
         private void GetSessionToDelete()
         {
             var sessions = _sessionService.CallRead();
-            var id = _sessionView.GetDeleteId(sessions);
-
-            _sessionService.CallDelete(id);
-            Console.Clear();
-            ReturnToMenu("Session deleted successfully.");
+            if (sessions.Count > 0)
+            {
+                var id = _sessionView.GetDeleteId(sessions);
+                _sessionService.CallDelete(id);
+                Console.Clear();
+                ReturnToMenu("Session deleted successfully.");
+            }
+            else
+            {
+                ReturnToMenu("No sessions found, add some first!!");
+            }
         }
 
         private void TimeNewSession()
@@ -107,18 +128,19 @@ namespace CodingTracker.m1chael888.Controllers
             stopwatch.Stop();
             var endTime = startTime + duration;
 
-            TrySave(MapDto(startTime.ToString("MM/dd/yyyy HH:mm:ss"), endTime.ToString("MM/dd/yyyy HH:mm:ss"), duration.ToString()));
+            TrySave(MapDto(startTime.ToString("yyyy/MM/dd HH:mm:ss"), endTime.ToString("yyyy/MM/dd HH:mm:ss"), duration.ToString()));
             Console.Clear();
             ReturnToMenu($"You coded for {duration.ToString()}!! Your session was saved successfully =)");
         }
 
         private void GetSessionDetails(string operation, bool error = false, long editId = 0)
         {
-            string[] errors = { "Please follow the date/time format carefully!!","Ensure that the starting time is before the ending time!!" };
+            string[] errors = { "Please follow the date/time format carefully!! You can omit seconds","Ensure that the starting time is before the ending time!!" };
+            string[] formats = { "yyyy/M/d H:mm:ss", "yyyy/M/d H:mm" };
             CultureInfo enUS = new CultureInfo("en-US");
 
             var startTime = _sessionView.GetTime(operation, "begin", error, errors[1]);
-            while (!DateTime.TryParseExact(startTime, "M/d/yyyy H:mm:ss", enUS, DateTimeStyles.None, out var startTimeOut))
+            while (!DateTime.TryParseExact(startTime, formats, enUS, DateTimeStyles.None, out var startTimeOut))
             {
                 error = true;
                 startTime = _sessionView.GetTime(operation, "begin", error, errorMsg: errors[0]);
@@ -126,7 +148,7 @@ namespace CodingTracker.m1chael888.Controllers
             error = false;
 
             var endTime = _sessionView.GetTime(operation, "end", error);
-            while (!DateTime.TryParseExact(endTime, "M/d/yyyy H:mm:ss", enUS, DateTimeStyles.None, out var endTimeOut))
+            while (!DateTime.TryParseExact(endTime, formats, enUS, DateTimeStyles.None, out var endTimeOut))
             {
                 error = true;
                 endTime = _sessionView.GetTime(operation, "end", error, errorMsg: errors[0]).ToString();
@@ -134,17 +156,25 @@ namespace CodingTracker.m1chael888.Controllers
             error = false;
 
             var duration = (DateTime.Parse(endTime) - DateTime.Parse(startTime));
-            duration = new TimeSpan(duration.Hours, duration.Minutes, duration.Seconds);
-            startTime = DateTime.Parse(startTime).ToString("MM/dd/yyyy HH:mm:ss");
-            endTime = DateTime.Parse(endTime).ToString("MM/dd/yyyy HH:mm:ss");
+            duration = new TimeSpan(duration.Days, duration.Hours, duration.Minutes, duration.Seconds);
+            startTime = DateTime.Parse(startTime).ToString("yyyy/MM/dd HH:mm:ss");
+            endTime = DateTime.Parse(endTime).ToString("yyyy/MM/dd HH:mm:ss");
+
+            var durationstring = duration.ToString();
+            if (duration.Days > 0)
+            {
+                var hours = duration.Days * 24 + duration.Hours;
+                var minAndSec = durationstring.Substring(durationstring.IndexOf(":"));
+                durationstring = hours + minAndSec;
+            }
 
             switch (operation)
             {
                 case "create":
-                    TrySave(MapDto(startTime, endTime, duration.ToString()));
+                    TrySave(MapDto(startTime, endTime, durationstring));
                     break;
                 case "update":
-                    TryEdit(MapDto(startTime, endTime, duration.ToString(), id: editId));
+                    TryEdit(MapDto(startTime, endTime, durationstring, id: editId));
                     break;
             }
             Console.Clear();
